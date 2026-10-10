@@ -1,0 +1,65 @@
+name: Build Dumpster Divers for Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'DumpsterGames-Actions-Fix.zip'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out website repository
+        uses: actions/checkout@v4
+
+      - name: Extract desktop game source from uploaded ZIP
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:GITHUB_WORKSPACE 'DumpsterGames-Actions-Fix.zip'
+          if (!(Test-Path -LiteralPath $archive)) {
+            throw 'Missing DumpsterGames-Actions-Fix.zip. Upload that ZIP to the root of the repository first.'
+          }
+          $extract = Join-Path $env:RUNNER_TEMP 'dumpster-divers-source'
+          if (Test-Path -LiteralPath $extract) {
+            Remove-Item -LiteralPath $extract -Recurse -Force
+          }
+          Expand-Archive -LiteralPath $archive -DestinationPath $extract -Force
+          $desktopSource = Join-Path $extract 'desktop'
+          if (!(Test-Path -LiteralPath (Join-Path $desktopSource 'package.json'))) {
+            throw 'The ZIP does not contain desktop/package.json at its top level. Upload the DumpsterGames-Actions-Fix.zip from ChatGPT.'
+          }
+          $desktopDestination = Join-Path $env:GITHUB_WORKSPACE 'desktop'
+          if (Test-Path -LiteralPath $desktopDestination) {
+            Remove-Item -LiteralPath $desktopDestination -Recurse -Force
+          }
+          Copy-Item -LiteralPath $desktopSource -Destination $desktopDestination -Recurse -Force
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Build the Windows installer and portable EXE
+        working-directory: desktop
+        run: npm run dist
+
+      - name: Upload Windows EXEs
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dumpster-Divers-Windows
+          path: desktop/dist/*.exe
+          if-no-files-found: error
+          retention-days: 30
