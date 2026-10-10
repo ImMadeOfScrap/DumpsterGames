@@ -1,0 +1,35 @@
+DUMPSTERGAMES PLAYER WEBSITE — QUICK START
+
+WHAT IT DOES
+- Website sign-up and log-in
+- Customizable pixel-style avatar
+- Friends and friend requests
+- Friend profile cards showing avatar, Pennys, and badge count
+- Badges that award Pennys
+- One Penny per 15 minutes, awarded through the database
+- Download link for the Windows Dumpster Divers game
+
+PUBLISH THE WEBSITE
+1. Upload these files to the ROOT of your GitHub Pages repository:
+   index.html
+   app.js
+   config.js
+2. Commit the files and wait for GitHub Pages to publish.
+3. Without the cloud setup below, the website only runs in local demo mode in each browser. Test accounts will not be shared between people.
+
+ENABLE SHARED ONLINE ACCOUNTS (ONE-TIME BACKEND SETUP)
+1. Create a project at https://supabase.com/.
+2. Open SQL Editor and run the entire schema.sql file.
+3. In Supabase project settings, copy the Project URL and PUBLIC publishable/anon key.
+4. Put those values in config.js. Never paste a service_role or secret key into website JavaScript.
+5. In Supabase Auth settings, add your GitHub Pages URL to Site URL and Redirect URLs.
+6. Register two test accounts in separate browser profiles; send and accept friend requests to test profile sharing.
+
+BUILD THE WINDOWS EXE
+The desktop source and GitHub Actions workflow are included in the complete package. Upload the desktop/ folder and .github/workflows/build-windows.yml to the same GitHub repository. In Actions, run “Build Dumpster Divers for Windows”. Download the “Dumpster-Divers-Windows” artifact when the workflow finishes; it contains the portable EXE and installer EXE.
+
+IMPORTANT
+- The EXE is single-player. It saves local game progress on that computer.
+- Website cloud profiles and EXE saves are not synchronized in this version. Web badges/Pennys and game badges/Pennys are separate.
+- Do not expose the EXE's local service to the internet. The game server binds to 127.0.0.1.
+- This hobby project is unsigned, so Windows SmartScreen may show a warning. Only run builds you created and trust.
