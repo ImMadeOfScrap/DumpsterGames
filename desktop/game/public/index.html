@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#11141d">
+  <meta name="description" content="Dumpster Divers — search the street, collect weird treasures, trade with friends, and become the king of curbside loot.">
+  <title>Dumpster Divers — Scavenge the Streets</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/vendor/three.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+
+  <style>
+    .badges-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:22px 0}.badge-card{display:flex;gap:12px;align-items:flex-start;padding:14px;background:#171a22;border:1px solid #373c48;min-height:104px}.badge-card.unlocked{border-color:#c4ff4d66;background:#c4ff4d0b}.badge-icon{display:grid;place-items:center;width:44px;height:44px;flex-shrink:0;border:2px solid #4a4f5a;background:#222733;font-size:22px}.badge-card.unlocked .badge-icon{border-color:#c4ff4d;background:#c4ff4d12}.badge-card h3{font-size:12px;margin:0 0 6px;color:#f1f2ef}.badge-card p{font-size:11px;line-height:1.5;color:#9ea4b3;margin:0 0 8px}.badge-reward{font-size:10px;color:#c4ff4d;font-weight:900;letter-spacing:.5px}.badge-card.locked{opacity:.62}.badge-lock{font-size:9px;color:#b8bbc3;letter-spacing:1px;text-transform:uppercase}
+  </style>
+</head>
+<body>
+  <div id="boot-screen" class="boot-screen">
+    <div class="boot-logo">D<span>!</span></div>
+    <div class="boot-title">DUMPSTER DIVERS</div>
+    <div class="boot-subtitle">LOADING THE STREET...</div>
+    <div class="boot-bar"><i></i></div>
+  </div>
+
+  <section id="auth-screen" class="auth-screen hidden">
+    <div class="auth-art">
+      <div class="moon-pixel"></div><div class="city-silhouette city-back"></div><div class="city-silhouette city-front"></div>
+      <div class="auth-dumpster"><i></i><b></b><em></em></div>
+      <div class="auth-spark spark-one">✦</div><div class="auth-spark spark-two">✧</div>
+      <div class="art-caption"><span class="eyebrow">THE ALLEY IS YOURS</span><h1>One person's<br><span>trash</span> is your loot.</h1><p>Dig up oddities. Make shady deals. Build your reputation, one bin at a time.</p></div>
+    </div>
+    <div class="auth-side">
+      <div class="brand-lockup"><div class="brand-icon">D<span>!</span></div><div><strong>DUMPSTER<br> DIVERS</strong><small>STREET SCAVENGER SIM</small></div></div>
+      <div class="auth-box">
+        <div class="auth-tabs"><button id="login-tab" class="tab active">LOG IN</button><button id="register-tab" class="tab">MAKE ACCOUNT</button></div>
+        <h2 id="auth-heading">Welcome back, diver.</h2><p id="auth-copy" class="muted">Your next big find is out there.</p>
+        <form id="auth-form">
+          <label for="auth-username">USERNAME</label><input id="auth-username" autocomplete="username" minlength="3" maxlength="16" pattern="[A-Za-z0-9_]+" placeholder="DumpsterKing" required>
+          <label for="auth-password">PASSWORD</label><input id="auth-password" autocomplete="current-password" type="password" minlength="8" maxlength="96" placeholder="At least 8 characters" required>
+          <div id="auth-hint" class="field-hint">Letters, numbers and underscores. Passwords are hashed on the server.</div>
+          <button id="auth-submit" class="button button-primary button-wide" type="submit">ENTER THE STREET <span>→</span></button>
+          <p id="auth-message" class="form-message" role="status"></p>
+        </form>
+        <div class="fine-print">THIS IS A GAME ACCOUNT. NEVER REUSE YOUR REAL-LIFE PASSWORD.</div>
+      </div>
+      <div class="auth-footer"><span>© DUMPSTER DIVERS</span><span>FINDERS KEEPERS.</span></div>
+    </div>
+  </section>
+
+  <div id="app" class="app hidden">
+    <header class="topbar">
+      <button id="brand-home" class="brand-button"><span class="brand-icon small">D<span>!</span></span><span class="brand-words">DUMPSTER<br>DIVERS</span></button>
+      <div class="top-status"><span class="status-dot"></span><span id="top-server-count">STREET OFFLINE</span><span class="status-divider"></span><span class="coin-icon">¢</span><b id="top-pennies">10</b><small>PENNYS</small></div>
+      <div class="top-user"><div id="top-avatar" class="tiny-avatar">D</div><span id="top-username">Diver</span><button id="logout-button" class="icon-button" title="Log out" aria-label="Log out">↪</button></div>
+    </header>
+
+    <main id="menu-screen" class="menu-screen screen">
+      <div class="menu-background"><div class="menu-grid"></div><div class="menu-moon"></div><div class="menu-roof roof-a"></div><div class="menu-roof roof-b"></div><div class="menu-road"><div></div><div></div><div></div></div><div class="menu-dumpster d-a"><b></b></div><div class="menu-dumpster d-b"><b></b></div><div class="menu-character"><i></i><b></b><em></em></div></div>
+      <div class="menu-content">
+        <div class="live-pill"><i></i> SOLO STREET • NO MULTIPLAYER</div>
+        <h1>THE CITY<br>THREW IT <span>AWAY.</span></h1>
+        <p class="hero-copy">Their loss. Your legendary pile of weird stuff.<br>Search dumpsters, flip your finds, and get rich-ish.</p>
+        <div class="menu-actions"><button id="play-button" class="button button-primary play-button">▶ &nbsp; ENTER THE STREET</button><button id="avatar-button" class="button button-outline">✦ &nbsp; STYLE YOUR DIVER</button></div>
+        <div class="game-facts"><div><strong>01</strong><span>SCAVENGE</span></div><div><strong>02</strong><span>SELL & TRADE</span></div><div><strong>03</strong><span>FLEX YOUR FINDS</span></div></div>
+      </div>
+      <aside class="menu-sidecards">
+        <div class="side-card wallet-card"><div class="card-eyebrow">YOUR POCKET</div><div class="wallet-amount"><span class="coin-icon big">¢</span><b id="menu-pennies">10</b><small>PENNYS</small></div><div class="penny-progress"><div id="penny-progress-bar"></div></div><p><b id="penny-countdown">15:00</b> until your next free penny</p><span class="note-tag">+1 PENNY / 15 MINUTES</span></div>
+        <div class="side-card"><div class="card-eyebrow">QUICK STATS</div><div class="stat-line"><span>IN YOUR BAG</span><b id="menu-bag-count">0 ITEMS</b></div><div class="stat-line"><span>FRIENDS</span><b id="menu-friend-count">0</b></div><div class="stat-line"><span>MODE</span><b id="menu-online">SOLO</b></div><button id="friends-button" class="text-button">OPEN FRIENDS <span>↗</span></button><button id="bag-button" class="text-button">CHECK MY BAG <span>↗</span></button><button id="badges-button" class="text-button">MY BADGES <span id="menu-badge-count">0</span> ↗</button></div>
+      </aside>
+      <footer class="menu-footer"><span>WASD TO WANDER • E TO INTERACT</span><span>BUILT FROM 100% VIRTUAL JUNK <b>▰▰▰</b></span></footer>
+    </main>
+
+    <main id="avatar-screen" class="screen sub-screen hidden">
+      <div class="sub-header"><button class="back-button" data-back>← BACK</button><div><span class="eyebrow">MAKE IT YOURS</span><h1>STYLE YOUR DIVER</h1></div></div>
+      <div class="avatar-layout"><div class="avatar-showcase"><div class="showcase-sticker">ALLEY ORIGINAL</div><div class="avatar-stage"><div id="avatar-preview" class="avatar-preview"><i class="avatar-hat"></i><b class="avatar-head"><em></em><em></em></b><span class="avatar-body"></span><small class="avatar-leg leg-left"></small><small class="avatar-leg leg-right"></small></div><div class="avatar-shadow"></div></div><div class="avatar-display-name" id="avatar-display-name">YOUR DIVER</div><p class="muted">Every legend needs a look.</p></div><div class="avatar-options"><div class="option-section"><h3>SKIN TONE</h3><div id="skin-options" class="swatches"></div></div><div class="option-section"><h3>HOODIE COLOR</h3><div id="shirt-options" class="swatches"></div></div><div class="option-section"><h3>HEADWEAR</h3><div id="hat-options" class="hat-options"></div></div><div class="avatar-actions"><button id="save-avatar" class="button button-primary">SAVE LOOK ↗</button><span id="avatar-status" class="muted"></span></div></div></div>
+    </main>
+
+    <main id="friends-screen" class="screen sub-screen hidden">
+      <div class="sub-header"><button class="back-button" data-back>← BACK</button><div><span class="eyebrow">GOOD PEOPLE, QUESTIONABLE BUSINESS</span><h1>YOUR CREW</h1></div></div>
+      <div class="friends-layout"><section class="panel"><div class="panel-heading"><h2>ADD A DIVER</h2><span class="panel-count">FRIEND FINDER</span></div><form id="friend-form" class="friend-add"><input id="friend-username" placeholder="Enter exact username" maxlength="16" required><button class="button button-primary" type="submit">SEND REQUEST</button></form><p id="friend-message" class="form-message"></p><div class="panel-heading spaced"><h2>FRIEND REQUESTS</h2><span id="request-count" class="count-badge">0</span></div><div id="friend-requests" class="friend-list empty-state">No requests. Your fan club is still forming.</div></section><section class="panel"><div class="panel-heading"><h2>YOUR FRIENDS</h2><span id="friends-count" class="panel-count">0 FRIENDS</span></div><div id="friends-list" class="friend-list empty-state">Nobody in your crew yet. Add a friend by username.</div><div class="panel-heading spaced"><h2>ON THIS STREET</h2><span class="online-mini"><i></i> LIVE</span></div><div id="online-friends-list" class="friend-list empty-state">This desktop edition is single-player. Check the website for your crew.</div></section></div>
+    </main>
+
+    <section id="game-screen" class="game-screen hidden">
+      <div id="game-world" class="game-world"></div>
+      <div class="game-shade"></div>
+      <div class="game-hud-top"><button id="leave-street" class="hud-button">← MENU</button><div class="street-title"><span class="street-sign">●</span><div><b>DUMPSTER STREET</b><small id="street-subtitle">THE ALLEY DISTRICT</small></div></div><div class="server-pill"><i></i><span id="game-player-count">SOLO MODE</span></div></div>
+      <div class="game-hud-left"><div class="mini-card"><span class="mini-label">YOUR PENNYS</span><div class="mini-number"><span class="coin-icon">¢</span><b id="game-pennies">10</b></div></div><div class="mini-card bag-card"><span class="mini-label">BACKPACK</span><div class="mini-number"><span>▣</span><b id="game-bag-count">0</b></div><button id="game-bag-button" class="mini-link">OPEN BAG [I]</button></div></div>
+      <div class="game-hud-right"><div class="nearby-card"><span class="mini-label">DIVERS NEARBY</span><div id="nearby-players" class="nearby-list"><span class="muted">Nobody yet...</span></div></div><div class="chat-card"><div class="chat-heading"><span>STREET CHAT</span><small>BE NICE, FIND TRASH</small></div><div id="chat-messages" class="chat-messages"></div><form id="chat-form" class="chat-form"><input id="chat-input" maxlength="140" placeholder="Say something... [T]" autocomplete="off"><button type="submit" aria-label="Send chat">↗</button></form></div></div>
+      <div id="interaction-hint" class="interaction-hint hidden"><kbd>E</kbd><div><strong id="interaction-title">SEARCH DUMPSTER</strong><small id="interaction-copy">See what the street left behind.</small></div></div>
+      <div id="game-toast" class="game-toast hidden"></div>
+      <div class="controls-note"><span>W A S D</span> MOVE <i>·</i> <span>SHIFT</span> SPRINT <i>·</i> <span>E</span> INTERACT <i>·</i> <span>I</span> BAG <i>·</i> <span>T</span> CHAT</div>
+      <div class="mobile-controls"><div class="mobile-dpad"><button data-move="forward">▲</button><div><button data-move="left">◀</button><button data-move="back">▼</button><button data-move="right">▶</button></div></div><button id="mobile-interact" class="mobile-action">E<br><small>DO</small></button></div>
+    </section>
+  </div>
+
+  <div id="bag-modal" class="modal hidden"><div class="modal-card large-modal"><button class="modal-close" data-close="bag">×</button><div class="modal-eyebrow">FOUND IT IN A BIN</div><h2>YOUR BACKPACK</h2><p class="muted">Junk is only junk until somebody wants it.</p><div class="bag-toolbar"><span id="bag-item-count">0 ITEMS</span><span id="bag-value">TOTAL VALUE: ¢0</span></div><div id="bag-items" class="item-list"></div><div class="modal-footer"><span id="bag-sale-hint" class="muted">Visit a dealer to sell your finds.</span><button id="sell-all-button" class="button button-primary">SELL ALL ↗</button></div></div></div>
+  <div id="npc-modal" class="modal hidden"><div class="modal-card dealer-modal"><button class="modal-close" data-close="npc">×</button><div class="dealer-avatar" id="dealer-avatar">S</div><div class="modal-eyebrow" id="dealer-job">JUNK DEALER</div><h2 id="dealer-title">SCRAPPY</h2><p id="dealer-quote" class="dealer-quote">"Got anything interesting?"</p><div class="dealer-total"><span>YOUR SELLABLE LOOT</span><b id="dealer-total-value">¢0</b></div><div id="dealer-items" class="item-list short-list"></div><button id="dealer-sell-all" class="button button-primary button-wide">SELL EVERYTHING ↗</button><button class="button button-outline button-wide" data-close="npc">MAYBE LATER</button></div></div>
+  <div id="incoming-trade-modal" class="modal hidden"><div class="modal-card trade-request-card"><div class="trade-stamp">⇄</div><div class="modal-eyebrow">SOMEONE WANTS TO SWAP</div><h2 id="trade-request-title">TRADE REQUEST</h2><p id="trade-request-copy" class="muted">Swap some of your questionable treasures?</p><div class="request-actions"><button id="decline-trade" class="button button-outline">NO THANKS</button><button id="accept-trade" class="button button-primary">LET'S TRADE</button></div></div></div>
+  <div id="trade-modal" class="modal hidden"><div class="modal-card large-modal trade-modal-card"><button class="modal-close" data-close="trade">×</button><div class="modal-eyebrow">NO REFUNDS AFTER THE HANDSHAKE</div><h2>PLAYER TRADE</h2><p class="muted">Choose what to offer. Both divers must press READY before items swap.</p><div class="trade-columns"><section><div class="panel-heading"><h3>YOUR BAG</h3><span id="trade-my-ready" class="ready-pill">NOT READY</span></div><div id="trade-my-items" class="item-list trade-items"></div></section><section><div class="panel-heading"><h3 id="trade-other-heading">THEIR OFFER</h3><span id="trade-other-ready" class="ready-pill">NOT READY</span></div><div id="trade-other-items" class="item-list trade-items"></div></section></div><div class="modal-footer trade-footer"><span id="trade-status" class="muted">Only offer items you actually want to swap.</span><div><button id="cancel-trade" class="button button-outline">CANCEL</button><button id="ready-trade" class="button button-primary">READY TO SWAP ✓</button></div></div></div></div>
+
+
+  <div id="badges-modal" class="modal hidden"><div class="modal-card large-modal"><button class="modal-close" data-close="badges">×</button><div class="modal-eyebrow">PROVE YOU HAVE BEEN IN THE BINS</div><h2>YOUR BADGES</h2><p class="muted">Every badge pays Pennys. Keep scavenging to unlock the collection.</p><div id="badges-grid" class="badges-grid"></div><div class="modal-footer"><span id="badge-total-reward" class="muted">0 badges unlocked</span><button class="button button-primary" data-close="badges">BACK TO THE STREET</button></div></div></div>
+
+  <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
